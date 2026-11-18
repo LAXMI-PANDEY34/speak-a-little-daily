@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, RotateCcw, Save, Sparkles, Square } from "lucide-react";
+import { Keyboard, Loader2, Mic, RotateCcw, Save, Sparkles, Square } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { formatDuration, topicForDate } from "@/lib/practice";
@@ -33,6 +34,9 @@ function PracticePage() {
   const topic = topicForDate(new Date());
   const speech = useSpeechRecognition();
   const [phase, setPhase] = useState<Phase>("idle");
+  const [mode, setMode] = useState<"speak" | "type">("speak");
+  const [typed, setTyped] = useState("");
+  const typeStartedAt = useRef(0);
   const [seconds, setSeconds] = useState(0);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -75,7 +79,29 @@ function PracticePage() {
     setPhase("idle");
   }
 
-  const transcript = [speech.finalText, speech.interimText].filter(Boolean).join(" ").trim();
+  const recording = phase === "recording";
+  const transcript =
+    mode === "type" ? typed.trim() : [speech.finalText, speech.interimText].filter(Boolean).join(" ").trim();
+
+  function switchMode(next: "speak" | "type") {
+    if (next === mode || recording) return;
+    redo();
+    setTyped("");
+    typeStartedAt.current = 0;
+    setMode(next);
+  }
+
+  function onType(value: string) {
+    if (!typeStartedAt.current && value) typeStartedAt.current = Date.now();
+    setTyped(value);
+    setFeedback(null);
+    setFeedbackError(null);
+  }
+
+  // Typing time: from first keystroke until now.
+  function typedSeconds() {
+    return typeStartedAt.current ? Math.floor((Date.now() - typeStartedAt.current) / 1000) : 0;
+  }
 
   async function askFeedback() {
     setFeedbackLoading(true);
@@ -96,7 +122,7 @@ function PracticePage() {
     const { error } = await supabase.from("sessions").insert({
       topic,
       transcript,
-      duration_seconds: seconds,
+      duration_seconds: mode === "type" ? typedSeconds() : seconds,
       feedback: feedback ? (JSON.parse(JSON.stringify(feedback)) as Json) : null,
     });
     setSaving(false);
@@ -109,7 +135,6 @@ function PracticePage() {
     navigate({ to: "/history" });
   }
 
-  const recording = phase === "recording";
   const hasText = speech.finalText || speech.interimText;
 
   return (
@@ -117,7 +142,57 @@ function PracticePage() {
       <p className="text-xs font-semibold uppercase tracking-widest text-primary">Today's topic</p>
       <h1 className="mt-2 text-2xl font-semibold">{topic}</h1>
 
-      <p className="mt-8 font-display text-5xl font-semibold tabular-nums" aria-live="polite">
+      <div className="mt-5 grid w-full grid-cols-2 rounded-full bg-muted p-1 text-sm font-medium">
+        {([
+          ["speak", "Speak", Mic],
+          ["type", "Type", Keyboard],
+        ] as const).map(([m, label, Icon]) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => switchMode(m)}
+            disabled={recording}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors",
+              mode === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+            )}
+          >
+            <Icon className="size-4" /> {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "type" ? (
+        <div className="mt-6 w-full space-y-3">
+          <Textarea
+            value={typed}
+            onChange={(e) => onType(e.target.value)}
+            placeholder="Type your answer in English…"
+            className="min-h-40 rounded-2xl bg-card p-4 text-base"
+            disabled={saving || feedbackLoading}
+          />
+          <div className="flex w-full gap-3">
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1 rounded-full"
+              onClick={askFeedback}
+              disabled={!transcript || feedbackLoading || saving || !!feedback}
+            >
+              {feedbackLoading ? <Loader2 className="animate-spin" /> : <Sparkles />}
+              {feedbackLoading ? "Checking…" : "Get AI Feedback"}
+            </Button>
+            <Button size="lg" className="flex-1 rounded-full" onClick={save} disabled={!transcript || saving || feedbackLoading}>
+              <Save /> {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+          {feedbackError && <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{feedbackError}</p>}
+          {feedback && <FeedbackCard feedback={feedback} />}
+        </div>
+      ) : (
+      <>
+
+      <p className="mt-6 font-display text-5xl font-semibold tabular-nums" aria-live="polite">
         {formatDuration(seconds)}
       </p>
 
@@ -199,6 +274,8 @@ function PracticePage() {
         <div className="mt-4 w-full">
           <FeedbackCard feedback={feedback} />
         </div>
+      )}
+      </>
       )}
     </div>
   );
