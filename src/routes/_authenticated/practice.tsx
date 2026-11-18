@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { formatDuration, topicForDate } from "@/lib/practice";
+import { formatDuration } from "@/lib/practice";
+import { useActiveTopic } from "@/lib/selected-topic";
 import { sessionsQuery } from "@/lib/sessions";
 import { cn } from "@/lib/utils";
 import { FeedbackCard } from "@/components/FeedbackCard";
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/practice")({
 type Phase = "idle" | "recording" | "stopped";
 
 function PracticePage() {
-  const topic = topicForDate(new Date());
+  const { topic, isCustom } = useActiveTopic();
   const speech = useSpeechRecognition();
   const [phase, setPhase] = useState<Phase>("idle");
   const [mode, setMode] = useState<"speak" | "type">("speak");
@@ -139,7 +140,7 @@ function PracticePage() {
 
   return (
     <div className="flex flex-col items-center text-center">
-      <p className="text-xs font-semibold uppercase tracking-widest text-primary">Today's topic</p>
+      <p className="text-xs font-semibold uppercase tracking-widest text-primary">{isCustom ? "Your topic" : "Today's topic"}</p>
       <h1 className="mt-2 text-2xl font-semibold">{topic}</h1>
 
       <div className="mt-5 grid w-full grid-cols-2 rounded-full bg-muted p-1 text-sm font-medium">

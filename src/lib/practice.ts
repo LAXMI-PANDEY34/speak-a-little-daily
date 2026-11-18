@@ -31,6 +31,67 @@ export const TOPICS = [
   "Describe what you did yesterday",
 ] as const;
 
+export type TopicLevel = "Beginner" | "Intermediate" | "Advanced";
+
+/** The same 30 topics, grouped by level for the topic chooser. */
+export const TOPIC_LEVELS: { level: TopicLevel; topics: (typeof TOPICS)[number][] }[] = [
+  {
+    level: "Beginner",
+    topics: [
+      "Introduce yourself",
+      "Describe your daily routine",
+      "Talk about your favorite food",
+      "Describe your family",
+      "Describe your favorite season",
+      "Describe your house or flat",
+      "Talk about the weather today",
+      "Describe your favorite animal",
+      "Describe your morning",
+      "Describe what you did yesterday",
+    ],
+  },
+  {
+    level: "Intermediate",
+    topics: [
+      "Describe your hometown",
+      "Talk about your best friend",
+      "Talk about a hobby you enjoy",
+      "Describe your favorite place to relax",
+      "Talk about a movie you like",
+      "Talk about your last weekend",
+      "Talk about music you listen to",
+      "Describe a meal you cooked",
+      "Describe your favorite app",
+      "Talk about your favorite festival",
+    ],
+  },
+  {
+    level: "Advanced",
+    topics: [
+      "Describe your dream job",
+      "Talk about a book you have read",
+      "Talk about a trip you remember",
+      "Describe a teacher who inspired you",
+      "Talk about a skill you want to learn",
+      "Describe your perfect day",
+      "Talk about a goal for this year",
+      "Talk about your work or studies",
+      "Describe a happy memory",
+      "Talk about how you stay healthy",
+    ],
+  },
+];
+
+export function isTopic(value: unknown): value is (typeof TOPICS)[number] {
+  return typeof value === "string" && (TOPICS as readonly string[]).includes(value);
+}
+
+/** A random topic from the list, different from `current` when possible. */
+export function randomTopic(current: string, rand: () => number = Math.random): string {
+  const pool = TOPICS.filter((t) => t !== current);
+  return pool[Math.floor(rand() * pool.length)] ?? TOPICS[0];
+}
+
 /** Local calendar day as YYYY-MM-DD. */
 export function dayKey(date: Date): string {
   const y = date.getFullYear();

@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
+import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -39,17 +40,24 @@ const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
   path: '/practice',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProgressRoute = AuthenticatedProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/practice': typeof AuthenticatedPracticeRoute
+  '/progress': typeof AuthenticatedProgressRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/practice': typeof AuthenticatedPracticeRoute
+  '/progress': typeof AuthenticatedProgressRoute
   '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
@@ -58,19 +66,21 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRoute
+  '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/history' | '/practice'
+  fullPaths: '/' | '/auth' | '/history' | '/practice' | '/progress'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/history' | '/practice' | '/'
+  to: '/auth' | '/history' | '/practice' | '/progress' | '/'
   id:
     | '__root__'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/history'
     | '/_authenticated/practice'
+    | '/_authenticated/progress'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
@@ -116,18 +126,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/progress': {
+      id: '/_authenticated/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AuthenticatedProgressRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
+  AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
+  AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 

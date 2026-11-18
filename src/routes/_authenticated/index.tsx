@@ -1,9 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Flame, LogOut, Mic } from "lucide-react";
+import { useState } from "react";
+import { Flame, ListChecks, LogOut, Mic, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { computeStreak, dayKey, topicForDate } from "@/lib/practice";
+import { computeStreak, dayKey, randomTopic } from "@/lib/practice";
+import { useActiveTopic } from "@/lib/selected-topic";
+import { TopicChooser } from "@/components/TopicChooser";
 import { sessionsQuery } from "@/lib/sessions";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -25,7 +28,8 @@ function HomePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const today = new Date();
-  const topic = topicForDate(today);
+  const { topic, isCustom, choose, reset } = useActiveTopic();
+  const [chooserOpen, setChooserOpen] = useState(false);
   const streak = computeStreak(sessions.map((s) => new Date(s.created_at)), today);
   const doneToday = sessions.some((s) => dayKey(new Date(s.created_at)) === dayKey(today));
 
@@ -51,7 +55,9 @@ function HomePage() {
       </header>
 
       <section className="rounded-3xl bg-gradient-primary p-6 text-primary-foreground shadow-mic">
-        <p className="text-xs font-semibold uppercase tracking-widest opacity-80">Today's topic</p>
+        <p className="text-xs font-semibold uppercase tracking-widest opacity-80">
+          {isCustom ? "Your topic" : "Today's topic"}
+        </p>
         <h1 className="mt-3 text-3xl font-semibold leading-tight">{topic}</h1>
         <Button asChild variant="secondary" size="lg" className="mt-6 w-full rounded-full">
           <Link to="/practice">
@@ -59,6 +65,32 @@ function HomePage() {
           </Link>
         </Button>
       </section>
+
+      <div className="-mt-2 space-y-2">
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="outline" className="rounded-full" onClick={() => choose(randomTopic(topic))}>
+            <Shuffle /> Random topic
+          </Button>
+          <Button variant="outline" className="rounded-full" onClick={() => setChooserOpen(true)}>
+            <ListChecks /> Choose topic
+          </Button>
+        </div>
+        {isCustom && (
+          <button type="button" onClick={reset} className="block w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline">
+            Back to today's topic
+          </button>
+        )}
+      </div>
+
+      <TopicChooser
+        open={chooserOpen}
+        onOpenChange={setChooserOpen}
+        current={topic}
+        onSelect={(t) => {
+          choose(t);
+          setChooserOpen(false);
+        }}
+      />
 
       <section className="surface flex items-center gap-4 p-5">
         <div className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">

@@ -12,12 +12,16 @@ Return:
 - corrected_text: the full corrected version of what they said, natural and simple English, keeping their meaning.
 - mistakes: the important grammar, word-choice or sentence mistakes (max 6). For each: "wrong" (their exact words), "correct" (fixed version), and "explanation": one short, simple sentence in Hinglish (Hindi written in English letters), e.g. "Yahan past tense chahiye kyunki baat kal ki hai."
   If there are no real mistakes, return an empty list.
-- tip: one short, friendly improvement tip in Hinglish.`;
+- tip: one short, friendly improvement tip in Hinglish.
+- score: a whole number from 1 to 10 for grammar (10 = no grammar mistakes).
+- score_reason: one short line in simple Hinglish explaining the grammar score.
+- fluency_score: a whole number from 1 to 10 for fluency: how smoothly and naturally the ideas flow, sentence variety, length and connecting words (ignore missing punctuation from speech-to-text).
+- fluency_reason: one short line in simple Hinglish explaining the fluency score.`;
 
 const schema = jsonSchema<Feedback>({
   type: "object",
   additionalProperties: false,
-  required: ["corrected_text", "mistakes", "tip"],
+  required: ["corrected_text", "mistakes", "tip", "score", "score_reason", "fluency_score", "fluency_reason"],
   properties: {
     corrected_text: { type: "string" },
     mistakes: {
@@ -34,6 +38,10 @@ const schema = jsonSchema<Feedback>({
       },
     },
     tip: { type: "string" },
+    score: { type: "integer" },
+    score_reason: { type: "string" },
+    fluency_score: { type: "integer" },
+    fluency_reason: { type: "string" },
   },
 });
 

@@ -1,16 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { History, Home, Mic } from "lucide-react";
+import { History, Home, Mic, TrendingUp } from "lucide-react";
 
 const items = [
   { to: "/", label: "Home", icon: Home },
   { to: "/practice", label: "Practice", icon: Mic },
   { to: "/history", label: "History", icon: History },
+  { to: "/progress", label: "Progress", icon: TrendingUp },
 ] as const;
 
 export function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-card/95 backdrop-blur pb-safe">
-      <ul className="mx-auto grid max-w-md grid-cols-3">
+      <ul className="mx-auto grid max-w-md grid-cols-4">
         {items.map(({ to, label, icon: Icon }) => (
           <li key={to}>
             <Link

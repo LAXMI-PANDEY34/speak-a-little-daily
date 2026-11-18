@@ -36,3 +36,5 @@ use the editor.
 - Daily topic rotation and streak math live in `src/lib/practice.ts` with tests in `src/lib/practice.test.ts`. Why: keep date rules pure and testable.
 - AI feedback runs in a TanStack server function (`src/lib/feedback.functions.ts` → `feedback.server.ts`) behind `requireSupabaseAuth`, not a Supabase Edge Function. Why: the Lovable AI key lives in the app's server runtime, and the endpoint must only serve signed-in users.
 - `src/start.ts` registers `attachSupabaseAuth` (`src/lib/auth-attacher.ts`) as function middleware. Why: it sends the user's bearer token that `requireSupabaseAuth` verifies.
+- A topic chosen on Home ("Random"/"Choose") is kept per day in browser localStorage via `src/lib/selected-topic.ts` and read by Practice. Why: no extra table needed; it falls back to the daily rotating topic.
+- AI scores live inside `sessions.feedback` jsonb; `parseFeedback` treats missing scores as null so older feedback still renders.
