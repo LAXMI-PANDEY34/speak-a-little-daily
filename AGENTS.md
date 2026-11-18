@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+
+- Signed-in pages live under `src/routes/_authenticated/` (client-only gate, redirects to `/auth`); `/` is the signed-in home, so there is no `src/routes/index.tsx`. Why: the app has no public surface besides sign-in.
+- Session data is read/written from the browser with the generated Supabase client and protected by RLS on `public.sessions` (own rows only). Why: no server-side logic is needed, so no server functions.
+- Daily topic rotation and streak math live in `src/lib/practice.ts` with tests in `src/lib/practice.test.ts`. Why: keep date rules pure and testable.
