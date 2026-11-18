@@ -6,7 +6,7 @@ export const sessionsQuery = queryOptions({
   queryFn: async () => {
     const { data, error } = await supabase
       .from("sessions")
-      .select("id, topic, transcript, duration_seconds, created_at")
+      .select("id, topic, transcript, duration_seconds, created_at, feedback")
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data;

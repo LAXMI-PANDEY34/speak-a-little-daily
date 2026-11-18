@@ -34,3 +34,5 @@ use the editor.
 - Signed-in pages live under `src/routes/_authenticated/` (client-only gate, redirects to `/auth`); `/` is the signed-in home, so there is no `src/routes/index.tsx`. Why: the app has no public surface besides sign-in.
 - Session data is read/written from the browser with the generated Supabase client and protected by RLS on `public.sessions` (own rows only). Why: no server-side logic is needed, so no server functions.
 - Daily topic rotation and streak math live in `src/lib/practice.ts` with tests in `src/lib/practice.test.ts`. Why: keep date rules pure and testable.
+- AI feedback runs in a TanStack server function (`src/lib/feedback.functions.ts` → `feedback.server.ts`) behind `requireSupabaseAuth`, not a Supabase Edge Function. Why: the Lovable AI key lives in the app's server runtime, and the endpoint must only serve signed-in users.
+- `src/start.ts` registers `attachSupabaseAuth` (`src/lib/auth-attacher.ts`) as function middleware. Why: it sends the user's bearer token that `requireSupabaseAuth` verifies.

@@ -17,6 +17,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { formatDuration } from "@/lib/practice";
 import { sessionsQuery } from "@/lib/sessions";
+import { parseFeedback } from "@/lib/feedback";
+import { FeedbackCard } from "@/components/FeedbackCard";
 
 export const Route = createFileRoute("/_authenticated/history")({
   head: () => ({
@@ -58,7 +60,9 @@ function HistoryPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {sessions.map((s) => (
+          {sessions.map((s) => {
+            const feedback = parseFeedback(s.feedback);
+            return (
             <li key={s.id} className="surface p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -97,8 +101,14 @@ function HistoryPage() {
               <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
                 <Clock className="size-3.5" /> {formatDuration(s.duration_seconds)}
               </p>
+              {feedback && (
+                <div className="mt-3">
+                  <FeedbackCard feedback={feedback} compact />
+                </div>
+              )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>

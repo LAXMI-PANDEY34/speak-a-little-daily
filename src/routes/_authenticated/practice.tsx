@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Mic, RotateCcw, Save, Square } from "lucide-react";
+import { Loader2, Mic, RotateCcw, Save, Sparkles, Square } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,10 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { formatDuration, topicForDate } from "@/lib/practice";
 import { sessionsQuery } from "@/lib/sessions";
 import { cn } from "@/lib/utils";
+import { FeedbackCard } from "@/components/FeedbackCard";
+import { getAiFeedback } from "@/lib/feedback.functions";
+import type { Feedback } from "@/lib/feedback";
+import type { Json } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/practice")({
   head: () => ({
@@ -30,6 +35,10 @@ function PracticePage() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [seconds, setSeconds] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const fetchFeedback = useServerFn(getAiFeedback);
   const startedAt = useRef(0);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -60,14 +69,36 @@ function PracticePage() {
 
   function redo() {
     speech.reset();
+    setFeedback(null);
+    setFeedbackError(null);
     setSeconds(0);
     setPhase("idle");
   }
 
+  const transcript = [speech.finalText, speech.interimText].filter(Boolean).join(" ").trim();
+
+  async function askFeedback() {
+    setFeedbackLoading(true);
+    setFeedbackError(null);
+    try {
+      const res = await fetchFeedback({ data: { topic, transcript } });
+      if (res.error) setFeedbackError(res.error);
+      else setFeedback(res.feedback);
+    } catch {
+      setFeedbackError("Sorry, the AI coach couldn't check this right now. Please try again in a moment.");
+    } finally {
+      setFeedbackLoading(false);
+    }
+  }
+
   async function save() {
     setSaving(true);
-    const transcript = [speech.finalText, speech.interimText].filter(Boolean).join(" ").trim();
-    const { error } = await supabase.from("sessions").insert({ topic, transcript, duration_seconds: seconds });
+    const { error } = await supabase.from("sessions").insert({
+      topic,
+      transcript,
+      duration_seconds: seconds,
+      feedback: feedback ? (JSON.parse(JSON.stringify(feedback)) as Json) : null,
+    });
     setSaving(false);
     if (error) {
       toast.error(error.message);
@@ -128,13 +159,28 @@ function PracticePage() {
       )}
 
       {phase === "stopped" && (
-        <div className="flex w-full gap-3">
-          <Button variant="outline" size="lg" className="flex-1 rounded-full" onClick={redo} disabled={saving}>
+        <div className="w-full space-y-3">
+          <div className="flex w-full gap-3">
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1 rounded-full"
+              onClick={askFeedback}
+              disabled={!transcript || feedbackLoading || saving || !!feedback}
+            >
+              {feedbackLoading ? <Loader2 className="animate-spin" /> : <Sparkles />}
+              {feedbackLoading ? "Checking…" : "Get AI Feedback"}
+            </Button>
+            <Button size="lg" className="flex-1 rounded-full" onClick={save} disabled={saving || feedbackLoading}>
+              <Save /> {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+          <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground" onClick={redo} disabled={saving || feedbackLoading}>
             <RotateCcw /> Redo
           </Button>
-          <Button size="lg" className="flex-1 rounded-full" onClick={save} disabled={saving}>
-            <Save /> {saving ? "Saving…" : "Save"}
-          </Button>
+          {feedbackError && (
+            <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{feedbackError}</p>
+          )}
         </div>
       )}
 
@@ -146,6 +192,12 @@ function PracticePage() {
             {speech.interimText && <span className="text-muted-foreground"> {speech.interimText}</span>}
             {!hasText && <span className="italic text-muted-foreground">{recording ? "Listening…" : "No words captured."}</span>}
           </p>
+        </div>
+      )}
+
+      {feedback && (
+        <div className="mt-4 w-full">
+          <FeedbackCard feedback={feedback} />
         </div>
       )}
     </div>
