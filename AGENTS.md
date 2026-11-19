@@ -38,4 +38,4 @@ use the editor.
 - `src/start.ts` registers `attachSupabaseAuth` (`src/lib/auth-attacher.ts`) as function middleware. Why: it sends the user's bearer token that `requireSupabaseAuth` verifies.
 - A topic chosen on Home ("Random"/"Choose") is kept per day in browser localStorage via `src/lib/selected-topic.ts` and read by Practice. Why: no extra table needed; it falls back to the daily rotating topic.
 - AI scores live inside `sessions.feedback` jsonb; `parseFeedback` treats missing scores as null so older feedback still renders.
-- Sign-in: new users verify an email OTP then set a password; returning users use email + password only. `src/lib/pending-password.ts` (sessionStorage flag) stops `/auth` from redirecting home between OTP verify and password set. Why: verifyOtp signs the user in before the password exists.
+- Sign-in: new users sign up with email + password (`signUp`) and land home immediately; returning users use `signInWithPassword`. Why: email confirmation is turned off in the Supabase dashboard, so `signUp` returns a session.
